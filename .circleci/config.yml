@@ -1,0 +1,47 @@
+version: 2.1
+
+jobs:
+  checkout_code:
+    docker:
+      - image: circleci/node:14
+    steps:
+      - checkout
+      - run: echo "Code checked out"
+
+  build:
+    docker:
+      - image: circleci/node:14
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: npm install --save
+      - run:
+          name: Run build
+          command: npm run build
+
+  deploy:
+    docker:
+      - image: circleci/node:14
+    steps:
+      - checkout
+      - setup_remote_docker:  
+          docker_layer_caching: true
+      - run:
+          name: Set execute permission
+          command: chmod +x deploy_script.sh
+      - run:
+          name: Deploy application
+          command: ./deploy_script.sh
+
+workflows:
+  version: 2
+  deploy_flow:
+    jobs:
+      - checkout_code
+      - build:
+          requires:
+            - checkout_code
+      - deploy:
+          requires:
+            - build
